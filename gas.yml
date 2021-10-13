@@ -1,0 +1,41 @@
+name: ARDHIAZ-RDP
+
+on: workflow_dispatch
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    timeout-minutes: 9999
+
+    steps:
+    - name: Mendownload Ngrok & Configurasi
+      run: |
+        Invoke-WebRequest https://github.com/kusmabudi/ardhiazrdp/raw/main/ngrok.exe -OutFile ngrok.exe
+        Invoke-WebRequest https://github.com/kusmabudi/ardhiazrdp/raw/main/config.exe -OutFile config.exe
+    - name: Configurasi ngrok kedalam windows directory.
+      run: | 
+        copy nssm.exe C:\Windows\System32
+        copy ngrok.exe C:\Windows\System32
+    - name: Menghubungkan ke NGROK akun
+      run: .\ngrok.exe authtoken $Env:ARDHIAZ_TOKEN
+      env:
+        ARDHIAZ_TOKEN: ${{ secrets.ARDHIAZ_TOKEN }}
+    - name: Mendownload File Tambahan.
+      run: |
+        Invoke-WebRequest https://github.com/kusmabudi/ardhiazrdp/raw/main/ardhiaz-ngrok.bat -OutFile ardhiaz-ngrok.bat
+        Invoke-WebRequest https://github.com/kusmabudi/ardhiazrdp/raw/main/ardhiaz-check.bat -OutFile ardhiaz-check.bat
+        Invoke-WebRequest https://github.com/kusmabudi/ardhiazrdp/raw/main/ardhiaz-loading.bat -OutFile ardhiaz-loading.bat
+    - name: Membuat YML Ngrok.
+      run: start NGROK-AP.bat
+    - name: Akses Ke RDP.
+      run: | 
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+    - name: Membuat Akses
+      run: sc start ngrok
+    - name:  Menghubungkan Ke ARDHIAZ-RDP.
+      run: cmd /c ardhiaz-check.bat
+    - name: Selesai! selamat menggunakan rdp gratis ini selama 6 jam D yang 70 jam belum jadi.
+      run: cmd /c ardhiaz-loading.bat 
